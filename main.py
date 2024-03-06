@@ -246,10 +246,6 @@ def main():
                                    font=("Arial", 10))
     destination_button.pack(pady=5)
 
-    download_button = tk.Button(root, text="Изтегли",
-                                command=lambda: download_mp3(url_entry.get(), destination_variable), bg="#66ffff",
-                                fg="#000000", font=("Arial", 20, "bold"))
-    download_button.pack(pady=10)
 
     root.mainloop()
 if __name__ == "__main__":
