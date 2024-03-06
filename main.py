@@ -49,22 +49,22 @@ def check_access():
         return False  # Access is denied
 
 
-# The URL of your Github repository
-github_url = "https://api.github.com/repos/Devastatora/Vanko-1/releases/latest"
 
-# A function that returns the latest version number from Github
-def get_latest_version():
-    try:
-        # Send a GET request to the Github API
-        response = requests.get(github_url)
-        response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
-        data = response.json()  # Attempt to parse the JSON data
-        return data["tag_name"]  # Return the tag name, which is the version number
-    except requests.RequestException as e:
-        print(f"An error occurred while fetching the latest version: {e}")
+
+def get_latest_release(repo_url):
+    owner, repo = repo_url.split('/')[-2:]
+    response = requests.get(f"https://api.github.com/repos/{owner}/{repo}/releases/latest", headers={"Authorization": "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"})
+    if response.status_code == 200:
+        data = response.json()
+        latest_version = data['tag_name']
+        return latest_version
+    else:
         return None
-
-
+def compare_versions(current_version, latest_version):
+        if current_version < latest_version:
+            return True  # New version available
+        else:
+            return False  # Up-to-date
 
 
 
@@ -183,6 +183,8 @@ def search_live():
     else:
         search_song(search_text)
 
+
+
 def main():
     # Проверка на достъпа
     if not check_access():
@@ -191,7 +193,9 @@ def main():
 
         # Прекратяване на програмата
         exit()
-
+    repo_url = "https://github.com/Devastatora/Vanko-1"
+    latest_version = get_latest_release(repo_url)
+    print(f"The latest version of the repository is: {latest_version}")
     global destination_variable
     global url_entry
     root = tk.Tk()
@@ -201,12 +205,24 @@ def main():
     icon = PhotoImage(file="icon.png")
     root.iconphoto(False, icon)
 
+
     # Center the window on the screen
     window_width = root.winfo_reqwidth()
     window_height = root.winfo_reqheight()
     position_right = int(root.winfo_screenwidth() / 3 - window_width / 2)
     position_down = int(root.winfo_screenheight() / 2 - window_height / 2)
     root.geometry(f"+{position_right}+{position_down}")
+    with open('version.txt', 'r') as file:
+        current_version = file.read().strip()
+
+    # Get the latest version from GitHub
+    latest_version = get_latest_release("https://github.com/Devastatora/Vanko-1")
+
+    # Compare the versions
+    if latest_version and compare_versions(current_version, latest_version):
+        # Display update notification
+        messagebox.showinfo("Update Available",
+                            "A new version is available! Please update your application to the latest version.")
 
     url_label = tk.Label(root, text="Линк или Име на песента:", bg="#999966", fg="#ffffcc",font=("Arial", 15))
     url_label.pack(pady=5)
