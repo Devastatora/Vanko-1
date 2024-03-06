@@ -8,24 +8,10 @@ from youtubesearchpython import VideosSearch
 import time
 import json
 import requests
+import base64
+import sys
 from tkinter import PhotoImage
 
-# Replace the owner and repo with your own
-owner = "Devastatora"
-repo = "Vanko"
-# Get the tags from the GitHub API
-response = requests.get(f"https://api.github.com/repos/{owner}/{repo}/tags")
-# Check if the response is successful
-if response.status_code == 200:
-    # Parse the response as JSON
-    data = response.json()
-    # Get the latest tag
-    latest_tag = data[0]['name']
-    # Print the latest tag
-    print(f"The latest tag is {latest_tag}")
-else:
-    # Print the error message
-    print(f"Error: {response.status_code}")
 
 destination_variable = None
 last_key_press_time = 0
@@ -60,6 +46,59 @@ def check_access():
         return True  # Access is allowed
     else:
         return False  # Access is denied
+
+# Define the URL of your GitHub repository
+repo_url = "https://github.com/Devastatora/Vanko"  # Replace this with your own repository URL
+
+# Define the name of the file that contains the program
+program_file = "main.py"  # Replace this with your own file name
+
+# Define a function to get the latest version of the program from GitHub
+def get_latest_version():
+    # Send a request to the GitHub API to get the file content
+    response = requests.get(f"{repo_url}/contents/{program_file}")
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Decode the file content from base64 and return it as a string
+        file_content = response.json()['content']
+        file_content = file_content.replace("\n", "")
+        file_content = file_content.encode()
+        file_content = base64.b64decode(file_content).decode()
+        return file_content
+    else:
+        # Return None if the request failed
+        return None
+
+# Define a function to check if the program needs to be updated
+def check_update():
+    # Get the latest version of the program from GitHub
+    latest_version = get_latest_version()
+    # Check if the latest version is not None
+    if latest_version is not None:
+        # Open the current version of the program file
+        with open(program_file, 'r') as file:
+            current_version = file.read()
+        # Compare the current version and the latest version
+        if current_version != latest_version:
+            # If they are different, show a message and ask the user if they want to update
+            answer = messagebox.askyesno("Наличен ъпдейт", "Има нова версия на програмата. Искате ли да я изтеглите?")
+            # If the user agrees, update the program file with the latest version
+            if answer:
+                with open(program_file, 'w') as file:
+                    file.write(latest_version)
+                # Show a message that the update was successful
+                messagebox.showinfo("Ъпдейт завършен", "Програмата беше успешно обновена.")
+                # Restart the program
+                os.execl(sys.executable, os.path.basename(sys.executable), *sys.argv)
+            else:
+                # If the user declines, show a message and continue the program
+                messagebox.showinfo("Ъпдейт отказан", "Програмата няма да бъде обновена.")
+        else:
+            # If they are the same, show a message and continue the program
+            messagebox.showinfo("Няма ъпдейт", "Програмата е с последната версия.")
+    else:
+        # If the latest version is None, show a message and continue the program
+        messagebox.showerror("Грешка при проверката", "Не може да се свърже с GitHub. Програмата ще продължи без проверка.")
 class AutocompleteEntry(tk.Entry):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -182,7 +221,7 @@ def main():
 
         # Прекратяване на програмата
         exit()
-
+    check_update()
     global destination_variable
     global url_entry
     root = tk.Tk()
